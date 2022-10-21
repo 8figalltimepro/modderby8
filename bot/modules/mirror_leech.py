@@ -18,7 +18,7 @@ from bot.helper.telegram_helper.filters import CustomFilters
 from bot.helper.telegram_helper.message_utils import sendMessage, sendMarkup, auto_delete_message
 from bot.helper.telegram_helper.button_build import ButtonMaker
 from .listener import MirrorLeechListener
-bot.helper.mirror_utils.upload_utils.gofiletools import GoFileUploader
+from bot.helper.mirror_utils.upload_utils.gofiletools import GoFileUploader
 
 def _mirror_leech(bot, message, isZip=False, extract=False, isQbit=False, isLeech=False, pswd=None, isGofile=False, multi=0):
     if message.text.lower().__contains__(" go ") and GOFILE and isLeech == False:
