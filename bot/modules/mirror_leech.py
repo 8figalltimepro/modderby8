@@ -18,8 +18,26 @@ from bot.helper.telegram_helper.filters import CustomFilters
 from bot.helper.telegram_helper.message_utils import sendMessage, sendMarkup, auto_delete_message
 from bot.helper.telegram_helper.button_build import ButtonMaker
 from .listener import MirrorLeechListener
+bot.helper.mirror_utils.upload_utils.gofiletools import GoFileUploader
 
-def _mirror_leech(bot, message, isZip=False, extract=False, isQbit=False, isLeech=False):
+def _mirror_leech(bot, message, isZip=False, extract=False, isQbit=False, isLeech=False, pswd=None, isGofile=False, multi=0):
+    if message.text.lower().__contains__(" go ") and GOFILE and isLeech == False:
+      gesg = message.text.split(f'mirror{CMD_INDEX} ', maxsplit=1)
+      mesg = gesg[1].split('\n')
+      isGofile = True
+      isdrive = True
+    elif message.text.lower().__contains__(" onlygo ") and GOFILE and isLeech == False:
+      gesg = message.text.split(f'mirror{CMD_INDEX} ', maxsplit=1)
+      mesg = gesg[1].split('\n')
+      isGofile = True
+      isdrive = False
+    elif isGofile == True and GOFILE and isLeech == True:
+      helpgofile_msg = "Files Leeched will not be upload to GoFile, Sorry 😿.\n All types of mirror commands work.\n Leech and Watch wont work for GoFile."
+      return sendMessage(helpgofile_msg, bot, message)
+    else: 
+      isGofile = False
+      isdrive = True
+      mesg = message.text.split('\n')
     buttons = ButtonMaker()
     if BOT_PM and message.chat.type != 'private':
         try:
@@ -120,7 +138,7 @@ def _mirror_leech(bot, message, isZip=False, extract=False, isQbit=False, isLeec
             elif isinstance(file_, list):
                 link = file_[-1].get_file().file_path
             elif not isQbit and file_.mime_type != "application/x-bittorrent":
-                listener = MirrorLeechListener(bot, message, isZip, extract, isQbit, isLeech, pswd, tag)
+                listener = MirrorListener(bot, message, isZip, extract, isQbit, isLeech, isGofile, isdrive, pswd, tag)
                 Thread(target=TelegramDownloadHelper(listener).add_download, args=(message, f'{DOWNLOAD_DIR}{listener.uid}/', name)).start()
                 if multi > 1:
                     sleep(4)
@@ -177,7 +195,7 @@ def _mirror_leech(bot, message, isZip=False, extract=False, isQbit=False, isLeec
                 if str(e).startswith('ERROR:'):
                     return sendMessage(str(e), bot, message)
 
-    listener = MirrorLeechListener(bot, message, isZip, extract, isQbit, isLeech, pswd, tag, select, seed)
+    listener = MirrorListener(bot, message, isZip, extract, isQbit, isLeech, isGofile, isdrive, select, seed, pswd, tag)
 
     if is_gdrive_link(link):
         if not isZip and not extract and not isLeech:
