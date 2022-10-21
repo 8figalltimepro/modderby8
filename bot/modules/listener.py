@@ -5,7 +5,7 @@ from time import sleep
 from os import path as ospath, remove as osremove, listdir, walk
 from subprocess import Popen
 from html import escape
-from bot import bot, Interval, INDEX_URL, VIEW_LINK, aria2, DOWNLOAD_DIR, download_dict, download_dict_lock, \
+from bot import GOFILE, GOFILETOKEN, GOFILEBASEFOLDER, bot, Interval, INDEX_URL, VIEW_LINK, aria2, DOWNLOAD_DIR, download_dict, download_dict_lock, \
                 LEECH_SPLIT_SIZE, LOGGER, DB_URI, INCOMPLETE_TASK_NOTIFIER, MAX_SPLIT_SIZE, MIRROR_LOGS, BOT_PM, SOURCE_LINK, AUTO_DELETE_UPLOAD_MESSAGE_DURATION, FORCE_BOT_PM, LEECH_LOG
 from bot.helper.ext_utils.fs_utils import get_base_name, get_path_size, split_file, clean_download, clean_target
 from bot.helper.ext_utils.exceptions import NotSupportedExtractionArchive
@@ -22,7 +22,7 @@ from bot.helper.ext_utils.db_handler import DbManger
 from bot.helper.ext_utils.telegraph_helper import telegraph
 from bot.helper.ext_utils.bot_utils import is_url, is_magnet
 class MirrorLeechListener:
-    def __init__(self, bot, message, isZip=False, extract=False, isQbit=False, isLeech=False, pswd=None, tag=None, select=False, seed=False):
+    def __init__(self, bot, message, isZip=False, extract=False, isQbit=False, isGofile=False, isdrive=True, isLeech=False, pswd=None, tag=None, select=False, seed=False):
         self.bot = bot
         self.message = message
         self.uid = message.message_id
@@ -32,6 +32,8 @@ class MirrorLeechListener:
         self.isLeech = isLeech
         self.pswd = pswd
         self.tag = tag
+        self.isGofile = isGofile
+        self.isdrive = isdrive
         self.seed = seed
         self.newDir = ""
         self.dir = f"{DOWNLOAD_DIR}{self.uid}"
@@ -152,8 +154,31 @@ class MirrorLeechListener:
             except NotSupportedExtractionArchive:
                 LOGGER.info("Not any valid archive, uploading file as it is.")
                 self.newDir = ""
-                path = m_path
+                path = m_path        
         else:
+            path = f'{DOWNLOAD_DIR}{self.uid}/{name}'
+          up_name = PurePath(path).name
+          up_path = f'{DOWNLOAD_DIR}{self.uid}/{up_name}'
+          if GOFILE and not self.isLeech and GOFILEBASEFOLDER is not None and GOFILETOKEN is not None and self.isGofile:
+                     global gofilefoldercreatedfolderlink
+                     rootdirname = os.path.basename(up_path)
+                     token = GOFILETOKEN
+                     baseid = GOFILEBASEFOLDER
+                     m = {'folderName': up_name, 'token': token, 'parentFolderId': baseid}
+                     createdfolder = requests.put('https://api.gofile.io/createFolder', data=m).json()['data']
+                     createdfoldercode = createdfolder['code']
+                     createdfolderid = createdfolder['id']
+                     LOGGER.info(f'GoFile Folder has been created with id: {createdfolderid}')
+                     gofilefoldercreatedfolderlink = (f'https://gofile.io/d/{createdfoldercode}')
+                     size = get_path_size(f'{DOWNLOAD_DIR}{self.uid}')
+                     LOGGER.info(f"GoFile Upload Name: {up_name}")
+                     go = GoFileUploader(up_name, self, createdfolderid)
+                     go_upload_status = GofileUploadStatus(go, size, gid, self)
+                     with download_dict_lock:
+                         download_dict[self.uid] = go_upload_status
+                     update_all_messages()
+                     go.uploadThis()
+                     LOGGER.info(f'GoFile Files have been uploaded')
             path = m_path
         up_dir, up_name = path.rsplit('/', 1)
         size = get_path_size(up_dir)
@@ -202,7 +227,7 @@ class MirrorLeechListener:
                 download_dict[self.uid] = tg_upload_status
             update_all_messages()
             tg.upload(o_files)
-        else:
+        elif self.isdrive:
             up_path = f'{up_dir}/{up_name}'
             size = get_path_size(up_path)
             LOGGER.info(f"Upload Name: {up_name}")
@@ -212,7 +237,9 @@ class MirrorLeechListener:
                 download_dict[self.uid] = upload_status
             update_all_messages()
             drive.upload(up_name)
-
+        else:
+            LOGGER.info("Either OnlyGo or Something wrong!")
+            
     def onUploadComplete(self, link: str, size, files, folders, typ, name):
         if not self.isPrivate and INCOMPLETE_TASK_NOTIFIER and DB_URI is not None:
             DbManger().rm_complete_task(self.message.link)
@@ -315,10 +342,13 @@ class MirrorLeechListener:
                 msg += f'\n<b>SubFolders: </b>{folders}'
                 msg += f'\n<b>Files: </b>{files}'
             buttons = ButtonMaker()
+            if self.isdrive:
+              buttons.buildbutton("☁️ Drive Link", link)              
+            if GOFILE and not self.isLeech and GOFILEBASEFOLDER is not None and GOFILETOKEN is not None and self.isGofile:
+              buttons.buildbutton("🗃 GoFile Link", gofilefoldercreatedfolderlink)
             msg += f'\n\n<b>cc: </b>{self.tag}'
-            buttons.buildbutton("☁️ Drive Link", link)
             LOGGER.info(f'Done Uploading {name}')
-            if INDEX_URL is not None:
+            if INDEX_URL is not None and self.isdrive:
                 url_path = rutils.quote(f'{name}')
                 share_url = f'{INDEX_URL}/{url_path}'
                 if typ == "Folder":
