@@ -14,7 +14,19 @@ from dotenv import load_dotenv
 from pyrogram import Client, enums
 from asyncio import get_event_loop
 from megasdkrestclient import MegaSdkRestClient, errors as mega_err
+import requests
 
+try:
+    SERVERNUMBER = requests.get('https://api.gofile.io/getServer').json()['data']
+    SERVERNUMBER = SERVERNUMBER['server']
+    SERVERNUMBER = SERVERNUMBER.split("e", maxsplit=1)[1]
+    SERVERNUMBER = int(SERVERNUMBER)
+    if SERVERNUMBER == 5:
+      SERVERNUMBER = 2
+    LOGGER.info(f"GoFile Server set to {SERVERNUMBER}")  
+except:
+    SERVERNUMBER = 2
+    
 main_loop = get_event_loop()
 
 faulthandler_enable()
@@ -278,6 +290,26 @@ try:
         raise KeyError
 except:
     UPTOBOX_TOKEN = None
+try:
+    GOFILE = getConfig('GOFILE')
+    GOFILE = GOFILE.lower() == 'true'
+    if GOFILE == True or GOFILE == 'true':
+      LOGGER.info('GoFile feature Has been enabled!')
+except:
+    GOFILE = False
+    LOGGER.info('GoFile feature Has been disabled!')
+try:  
+     GOFILETOKEN = getConfig('GOFILETOKEN')
+except:
+    GOFILE = False
+    GOFILETOKEN = False
+    LOGGER.info('Gofile API key not provided!') 
+try:
+  GOFILEBASEFOLDER = getConfig('GOFILEBASEFOLDERID')
+except:
+    GOFILE = False    
+    GOFILEBASEFOLDER = False
+    LOGGER.info('Gofile BASEFOLDER ID not provided!')
 try:
     INDEX_URL = getConfig('INDEX_URL').rstrip("/")
     if len(INDEX_URL) == 0:
