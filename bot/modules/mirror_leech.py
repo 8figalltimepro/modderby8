@@ -138,7 +138,7 @@ def _mirror_leech(bot, message, isZip=False, extract=False, isQbit=False, isLeec
             elif isinstance(file_, list):
                 link = file_[-1].get_file().file_path
             elif not isQbit and file_.mime_type != "application/x-bittorrent":
-                listener = MirrorListener(bot, message, isZip, extract, isQbit, isLeech, isGofile, isdrive, pswd, tag)
+                listener = MirrorLeechListener(bot, message, isZip, extract, isQbit, isLeech, isGofile, isdrive, pswd, tag)
                 Thread(target=TelegramDownloadHelper(listener).add_download, args=(message, f'{DOWNLOAD_DIR}{listener.uid}/', name)).start()
                 if multi > 1:
                     sleep(4)
@@ -195,7 +195,7 @@ def _mirror_leech(bot, message, isZip=False, extract=False, isQbit=False, isLeec
                 if str(e).startswith('ERROR:'):
                     return sendMessage(str(e), bot, message)
 
-    listener = MirrorListener(bot, message, isZip, extract, isQbit, isLeech, isGofile, isdrive, select, seed, pswd, tag)
+    listener = MirrorLeechListener(bot, message, isZip, extract, isQbit, isLeech, isGofile, isdrive, select, seed, pswd, tag)
 
     if is_gdrive_link(link):
         if not isZip and not extract and not isLeech:
