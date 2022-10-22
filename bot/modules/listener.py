@@ -161,30 +161,30 @@ class MirrorLeechListener:
                 self.newDir = ""
                 path = m_path        
         else:
-            path = f'{DOWNLOAD_DIR}{self.uid}/{name}'
-          up_name = PurePath(path).name
-          up_path = f'{DOWNLOAD_DIR}{self.uid}/{up_name}'
-          if GOFILE and not self.isLeech and GOFILEBASEFOLDER is not None and GOFILETOKEN is not None and self.isGofile:
-                     global gofilefoldercreatedfolderlink
-                     rootdirname = os.path.basename(up_path)
-                     token = GOFILETOKEN
-                     baseid = GOFILEBASEFOLDER
-                     m = {'folderName': up_name, 'token': token, 'parentFolderId': baseid}
-                     createdfolder = requests.put('https://api.gofile.io/createFolder', data=m).json()['data']
-                     createdfoldercode = createdfolder['code']
-                     createdfolderid = createdfolder['id']
-                     LOGGER.info(f'GoFile Folder has been created with id: {createdfolderid}')
-                     gofilefoldercreatedfolderlink = (f'https://gofile.io/d/{createdfoldercode}')
-                     size = get_path_size(f'{DOWNLOAD_DIR}{self.uid}')
-                     LOGGER.info(f"GoFile Upload Name: {up_name}")
-                     go = GoFileUploader(up_name, self, createdfolderid)
-                     go_upload_status = GofileUploadStatus(go, size, gid, self)
-                     with download_dict_lock:
-                         download_dict[self.uid] = go_upload_status
-                     update_all_messages()
-                     go.uploadThis()
-                     LOGGER.info(f'GoFile Files have been uploaded')
-            path = m_path
+          path = f'{DOWNLOAD_DIR}{self.uid}/{name}'
+        up_name = PurePath(path).name
+        up_path = f'{DOWNLOAD_DIR}{self.uid}/{up_name}'
+        if GOFILE and not self.isLeech and GOFILEBASEFOLDER is not None and GOFILETOKEN is not None and self.isGofile:
+                   global gofilefoldercreatedfolderlink
+                   rootdirname = os.path.basename(up_path)
+                   token = GOFILETOKEN
+                   baseid = GOFILEBASEFOLDER
+                   m = {'folderName': up_name, 'token': token, 'parentFolderId': baseid}
+                   createdfolder = requests.put('https://api.gofile.io/createFolder', data=m).json()['data']
+                   createdfoldercode = createdfolder['code']
+                   createdfolderid = createdfolder['id']
+                   LOGGER.info(f'GoFile Folder has been created with id: {createdfolderid}')
+                   gofilefoldercreatedfolderlink = (f'https://gofile.io/d/{createdfoldercode}')
+                   size = get_path_size(f'{DOWNLOAD_DIR}{self.uid}')
+                   LOGGER.info(f"GoFile Upload Name: {up_name}")
+                   go = GoFileUploader(up_name, self, createdfolderid)
+                   go_upload_status = GofileUploadStatus(go, size, gid, self)
+                   with download_dict_lock:
+                       download_dict[self.uid] = go_upload_status
+                   update_all_messages()
+                   go.uploadThis()
+                   LOGGER.info(f'GoFile Files have been uploaded')
+        path = m_path
         up_dir, up_name = path.rsplit('/', 1)
         size = get_path_size(up_dir)
         if self.isLeech:
