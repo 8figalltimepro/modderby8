@@ -5,6 +5,7 @@ from time import sleep
 from os import path as ospath, remove as osremove, listdir, walk
 from subprocess import Popen
 from html import escape
+from pathlib import PurePath
 from bot import GOFILE, GOFILETOKEN, GOFILEBASEFOLDER, bot, Interval, INDEX_URL, VIEW_LINK, aria2, DOWNLOAD_DIR, download_dict, download_dict_lock, \
                 LEECH_SPLIT_SIZE, LOGGER, DB_URI, INCOMPLETE_TASK_NOTIFIER, MAX_SPLIT_SIZE, MIRROR_LOGS, BOT_PM, SOURCE_LINK, AUTO_DELETE_UPLOAD_MESSAGE_DURATION, FORCE_BOT_PM, LEECH_LOG
 from bot.helper.ext_utils.fs_utils import get_base_name, get_path_size, split_file, clean_download, clean_target
