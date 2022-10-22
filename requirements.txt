@@ -29,3 +29,4 @@ tenacity
 tgCrypto
 xattr
 yt-dlp
+requests_toolbelt
